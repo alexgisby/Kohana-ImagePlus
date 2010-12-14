@@ -41,8 +41,9 @@ class Kohana_Controller_ImagePlus extends Controller {
 		{
 			$image = ImagePlus::thumbnail($filename, $dimensions, 1);
 			
-			$this->request->status 		= 200;
+			//$this->request->status 		= 200;
 			$this->request->headers[] 	= 'Content-Type: ' . $image->type;
+			$this->request->headers[] 	= 'Cache-Control: max-age=' . 608400 . ', must-revalidate';
 			$this->request->response 	= $image->render(null, $dimensions['q']);
 		}
 		catch(Exception_ImagePlus $e)
