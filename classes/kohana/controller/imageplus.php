@@ -25,6 +25,7 @@ class Kohana_Controller_ImagePlus extends Controller {
 		$ext = array_shift($fileparts);
 		
 		// Loop through the other parts to try and find size and quality identifiers:
+		$dimensions = array();
 		foreach($fileparts as $part)
 		{
 			if(preg_match('/(?P<quantifier>w|h|q)(?<value>[0-9]{1,4})/', $part, $matches))

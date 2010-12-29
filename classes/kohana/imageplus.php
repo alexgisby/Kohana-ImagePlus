@@ -60,7 +60,7 @@ class Kohana_ImagePlus
 			// Check if we should upscale or not:
 			if(!$upscale)
 			{
-				if($dimensions['w'] != null && $dimensions['w'] > $src_width && $dimensions['h'] != null && $dimensions['h'] > $src_height)
+				if(($dimensions['w'] == null && $dimensions['h'] == null) || ($dimensions['w'] != null && $dimensions['w'] > $src_width && $dimensions['h'] != null && $dimensions['h'] > $src_height))
 				{
 					// No need to upscale. Return the image as-is.
 					return $image;
