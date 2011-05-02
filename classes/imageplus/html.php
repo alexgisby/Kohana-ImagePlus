@@ -21,7 +21,7 @@ class ImagePlus_HTML extends Kohana_HTML
 	public static function thumbnail($src, array $dimensions, array $attr = array())
 	{
 		$ext = ImagePlus::extension_from_filepath($src);
-		$src = rtrim($src, '.' . $ext);
+		$src = substr($src, 0, -(strlen($ext) + 1));
 		
 		// Append the dimensions:
 		foreach($dimensions as $key => $value)
