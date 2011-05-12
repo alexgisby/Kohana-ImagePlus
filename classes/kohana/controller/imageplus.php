@@ -42,25 +42,44 @@ class Kohana_Controller_ImagePlus extends Controller {
 		{
 			$image = ImagePlus::thumbnail($filename, $dimensions, 1);
 			
-			//$this->request->status 		= 200;
-			$this->request->headers[] 	= 'Content-Type: ' . $image->type;
-			$this->request->headers[] 	= 'Cache-Control: max-age=' . 608400 . ', must-revalidate';
-			$this->request->response 	= $image->render(null, $dimensions['q']);
+			if(version_compare(kohana::VERSION, '3.1', '>='))
+			{
+				$this->response->headers('Content-Type', $image->mime);
+				$this->response->headers('Cache-Control', 'max-age=' . 608400 . ', must-revalidate');
+				$this->response->body($image->render(null, $dimensions['q']));
+			}
+			else
+			{
+				$this->request->headers[] 	= 'Content-Type: ' . $image->type;
+				$this->request->headers[] 	= 'Cache-Control: max-age=' . 608400 . ', must-revalidate';
+				$this->request->response 	= $image->render(null, $dimensions['q']);
+			}
 		}
 		catch(Exception_ImagePlus $e)
 		{
+			$status = 500;
+			
 			switch($e->getCode())
 			{
 				case 404:
-					$this->request->status = 404;
-					$this->request->response = $e->getMessage();
+					$status = 404;
 				break;
 				
 				case 500:
 				case 101:
-					$this->request->status = 500;
-					$this->request->response = $e->getMessage();
+					$status = 500;
 				break;
+			}
+			
+			if(version_compare(kohana::VERSION, '3.1', '>='))
+			{
+				$this->response->status($status);
+				$this->response->body($e->getMessage());
+			}
+			else
+			{
+				$this->request->status = $status;
+				$this->request->response = $e->getMessage();
 			}
 		}
 	}
