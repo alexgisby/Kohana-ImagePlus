@@ -10,6 +10,10 @@
 
 class Kohana_ImagePlus
 {
+	/**
+	 * @var 	Config		Config placeholder
+	 */
+	protected static $config;
 	
 	/**
 	 * Creates a thumbnail of an image. A thumbnail is broadly described as being smaller than the source image and the process weighted as such.
@@ -33,6 +37,8 @@ class Kohana_ImagePlus
 		// Validate the image:
 		ImagePlus::validate_image($filename);
 		
+		self::load_config();
+		
 		if(kohana::config('imageplus')->cache_images)
 		{
 			// Check we have the Cache.
@@ -44,13 +50,13 @@ class Kohana_ImagePlus
 		// Sort out the target dimensions;
 		if(!array_key_exists('w', $dimensions)) 	$dimensions['w'] = null;
 		if(!array_key_exists('h', $dimensions))		$dimensions['h'] = null;
-		if(!array_key_exists('q', $dimensions)) 	$dimensions['q'] = kohana::config('imageplus')->default_quality;
+		if(!array_key_exists('q', $dimensions)) 	$dimensions['q'] = self::$config->default_quality;
 		
 		// Load up the image ready for manipulation.
 		$image = Image::factory($filename);
 		
 		// Now we check the cache to see if this image already exists:
-		if(kohana::config('imageplus')->cache_images && ImagePlus::cache_exists($image, $dimensions))
+		if(self::$config->cache_images && ImagePlus::cache_exists($image, $dimensions))
 		{
 			$image = ImagePlus::cache_read($image, $dimensions);
 			$dimensions['q'] = 100;	// This seems odd, but considering we have it saved as a quality already, the output needs to be full quality.
@@ -68,7 +74,7 @@ class Kohana_ImagePlus
 			}
 		
 			$image->resize($dimensions['w'], $dimensions['h']);
-			if(kohana::config('imageplus')->cache_images)
+			if(self::$config->cache_images)
 			{
 				$image = ImagePlus::cache_image($image, $dimensions);
 			}
@@ -129,7 +135,10 @@ class Kohana_ImagePlus
 	 */
 	protected static function cache_checkdir()
 	{
-		$cache_dir = kohana::$cache_dir . '/' . kohana::config('imageplus')->cache_dir;
+		// Load up the config (this varies between Kohana versions)
+		self::load_config();
+		
+		$cache_dir = kohana::$cache_dir . '/' . self::$config->cache_dir;
 		
 		// Try and remake / repermission the directory:
 		if(!file_exists($cache_dir) || !is_writable($cache_dir))
@@ -155,8 +164,10 @@ class Kohana_ImagePlus
 	 */
 	protected static function cache_exists(Image $image, array $dimensions)
 	{
+		self::load_config();
+		
 		$token 	= sha1($image->file . $dimensions['w'] . $dimensions['h'] . $dimensions['q']);
-		$subdir = kohana::$cache_dir . '/' . kohana::config('imageplus')->cache_dir . '/' . substr($token, 0, 4);
+		$subdir = kohana::$cache_dir . '/' . $config->cache_dir . '/' . substr($token, 0, 4);
 		
 		$ext = ImagePlus::extension_from_filepath($image->file);
 		$cache_filename = $subdir . '/' . $token . '.' . $ext;
@@ -185,8 +196,10 @@ class Kohana_ImagePlus
 	 */
 	protected static function cache_read(Image $image, array $dimensions)
 	{
+		self::load_config();
+		
 		$token 	= sha1($image->file . $dimensions['w'] . $dimensions['h'] . $dimensions['q']);
-		$subdir = kohana::$cache_dir . '/' . kohana::config('imageplus')->cache_dir . '/' . substr($token, 0, 4);
+		$subdir = kohana::$cache_dir . '/' . self::$config->cache_dir . '/' . substr($token, 0, 4);
 		
 		$ext = ImagePlus::extension_from_filepath($image->file);
 		$cache_filename = $subdir . '/' . $token . '.' . $ext;
@@ -204,11 +217,13 @@ class Kohana_ImagePlus
 	 */
 	protected static function cache_image(Image $image, array $dimensions)
 	{
+		self::load_config();
+		
 		// Generate a token for this:
 		$token 	= sha1($image->file . $dimensions['w'] . $dimensions['h'] . $dimensions['q']);
 				
 		// Grab a few letters from the front to make as the directory:
-		$subdir = kohana::$cache_dir . '/' . kohana::config('imageplus')->cache_dir . '/' . substr($token, 0, 4);
+		$subdir = kohana::$cache_dir . '/' . self::$config->cache_dir . '/' . substr($token, 0, 4);
 		
 		// Make that cache dir:
 		@mkdir($subdir);
@@ -247,6 +262,28 @@ class Kohana_ImagePlus
 		{
 			return '';
 		}
+	}
+	
+	
+	/**
+	 * Loads up the config system (this is different in different versions of Kohana)
+	 */
+	public static function load_config()
+	{
+		if(!isset(self::$config))
+		{
+			// Load up the config (this varies between Kohana versions)
+			if(version_compare(kohana::VERSION, '3.2', '>='))
+			{
+				self::$config = kohana::$config->load('imageplus');
+			}
+			else
+			{
+				self::$config = kohana::config('imageplus');
+			}
+		}
+		
+		return self::$config;
 	}
 	
 }
