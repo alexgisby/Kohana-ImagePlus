@@ -39,7 +39,7 @@ class Kohana_ImagePlus
 		
 		self::load_config();
 		
-		if(kohana::config('imageplus')->cache_images)
+		if(self::$config->cache_images)
 		{
 			// Check we have the Cache.
 			ImagePlus::cache_checkdir();
@@ -167,7 +167,7 @@ class Kohana_ImagePlus
 		self::load_config();
 		
 		$token 	= sha1($image->file . $dimensions['w'] . $dimensions['h'] . $dimensions['q']);
-		$subdir = kohana::$cache_dir . '/' . $config->cache_dir . '/' . substr($token, 0, 4);
+		$subdir = kohana::$cache_dir . '/' . self::$config->cache_dir . '/' . substr($token, 0, 4);
 		
 		$ext = ImagePlus::extension_from_filepath($image->file);
 		$cache_filename = $subdir . '/' . $token . '.' . $ext;
